@@ -51,6 +51,10 @@ body {
   display: none;
 }
 
+.hero {
+  margin-top: 28px;
+}
+
 .hero h1 {
   margin: 0 0 16px;
   font-family: var(--font-body);
@@ -71,12 +75,16 @@ body {
 
 /* Navigation */
 .top-nav {
-  margin-top: 28px;
   display: flex;
   gap: 24px;
   flex-wrap: wrap;
   border-bottom: 1px solid var(--line);
-  padding-bottom: 16px;
+  padding: 16px 0;
+  margin-bottom: 4px;
+  position: sticky;
+  top: 0;
+  background: var(--bg-1);
+  z-index: 10;
 }
 
 .nav-link {
@@ -173,7 +181,7 @@ button.chip-button.secondary:hover {
 .summary {
   margin-top: 40px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 20px;
 }
 
@@ -314,10 +322,23 @@ button.chip-button.secondary:hover {
 
 .workspace.two-column {
   grid-template-columns: 1fr 1.35fr;
+  grid-template-rows: auto 1fr;
+  align-items: start;
+}
+
+.workspace.two-column .panel:nth-child(1) {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.workspace.two-column .panel:nth-child(2) {
+  grid-column: 1;
+  grid-row: 2;
 }
 
 .workspace.two-column .panel:nth-child(3) {
-  grid-column: 1;
+  grid-column: 2;
+  grid-row: 1 / span 2;
 }
 
 .workspace.two-column .panel {
@@ -767,7 +788,7 @@ button:disabled {
   }
 
   .summary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .insight {
@@ -786,6 +807,18 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
+  .workspace.two-column {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .workspace.two-column .panel:nth-child(1),
+  .workspace.two-column .panel:nth-child(2),
+  .workspace.two-column .panel:nth-child(3) {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
   .top-nav {
     gap: 16px;
   }
@@ -802,6 +835,10 @@ button:disabled {
   body.number-pad-open .layout {
     /* 380px = 60px (nav bar) + ~320px (number pad sheet) */
     padding-bottom: calc(380px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .hero {
+    margin-top: 8px;
   }
 
   .hero h1 {
