@@ -91,6 +91,7 @@ body {
   font-size: 0.9rem;
   font-weight: 400;
   transition: all 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .nav-link:hover {
@@ -509,6 +510,8 @@ button {
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button:hover {
@@ -792,11 +795,13 @@ button:disabled {
   .layout {
     width: 96vw;
     padding-top: 20px;
-    padding-bottom: 40px;
+    /* 60px = approx bottom nav bar height; extra space keeps content clear of the bar */
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
   }
 
   body.number-pad-open .layout {
-    padding-bottom: 320px;
+    /* 380px = 60px (nav bar) + ~320px (number pad sheet) */
+    padding-bottom: calc(380px + env(safe-area-inset-bottom, 0px));
   }
 
   .hero h1 {
@@ -808,16 +813,31 @@ button:disabled {
   }
 
   .top-nav {
-    gap: 12px;
-    margin-top: 20px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    margin: 0;
+    background: var(--bg-1);
+    border-top: 1px solid var(--line);
+    border-bottom: none;
+    padding: 0 4px env(safe-area-inset-bottom, 0px);
+    gap: 0;
   }
 
   .nav-link {
     flex: 1;
     text-align: center;
-    padding: 8px 6px;
-    font-size: 0.85rem;
-    border-bottom-width: 1px;
+    padding: 10px 4px;
+    font-size: 0.8rem;
+    border-bottom: none;
+    border-top: 2px solid transparent;
+  }
+
+  .nav-link.is-active {
+    border-top-color: var(--accent);
+    border-bottom-color: transparent;
   }
 
   .meter-row {
@@ -878,6 +898,20 @@ button:disabled {
 
   .safety-actions {
     width: 100%;
+  }
+
+  .summary .stat-card:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .message {
+    /* stay above the fixed bottom nav bar */
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+
+  body.number-pad-open .message {
+    /* stay above bottom nav bar (~60px) and open number pad (~300px) */
+    bottom: calc(360px + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -984,6 +1018,23 @@ button:disabled {
 
   body.number-pad-open .message {
     bottom: 280px;
+  }
+}
+
+@media (max-width: 720px) {
+  /* push number pad above the fixed bottom nav bar */
+  .number-pad {
+    bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-copy {
+    display: none;
+  }
+
+  .stat-card p {
+    font-size: clamp(1.2rem, 5.5vw, 1.5rem);
   }
 }
 
