@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FundSprint | Expenses</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Manrope:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style-new.css" />
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <main class="layout">
+      <header class="hero reveal">
+        <h1>支出管理與分類分析</h1>
+        <p class="hero-copy">
+          這頁專注在支出輸入、分類篩選與排序，避免主頁過度擁擠。
+        </p>
+      </header>
+
+      <nav class="top-nav reveal" aria-label="頁面導覽">
+        <a class="nav-link" href="index.html">主控台</a>
+        <a class="nav-link" href="analysis.html">分析頁</a>
+        <a class="nav-link is-active" href="expenses.html">支出頁</a>
+        <a class="nav-link" href="settings.html">設定頁</a>
+      </nav>
+
+      <section class="command-bar reveal" aria-label="快速操作">
+        <button type="button" class="chip-button" data-focus="expenseTitleInput">新增支出</button>
+        <button type="button" class="chip-button secondary" id="undoButton" disabled>復原刪除</button>
+        <a class="chip-link" href="index.html">返回主控台</a>
+        <a class="chip-link" href="analysis.html">前往分析頁</a>
+        <a class="chip-link" href="settings.html">前往設定頁</a>
+        <p class="command-tip">快捷鍵：Alt+E / Alt+Z</p>
+      </section>
+
+      <section class="summary reveal" aria-label="資金總覽">
+        <article class="stat-card accent-a">
+          <h2>現有預算</h2>
+          <p id="budgetValue">NT$0.00</p>
+          <small>已扣除支出</small>
+        </article>
+
+        <article class="stat-card accent-b">
+          <h2>可用資金</h2>
+          <p id="unlockedEverValue">NT$0.00</p>
+          <small>完成過就保留</small>
+        </article>
+
+        <article class="stat-card accent-b">
+          <h2>收入</h2>
+          <p id="incomeValue">NT$0.00</p>
+          <small>手動新增收入</small>
+        </article>
+
+        <article class="stat-card accent-c">
+          <h2>已支出</h2>
+          <p id="spentValue">NT$0.00</p>
+          <small>已記錄支出合計</small>
+        </article>
+
+        <article class="stat-card accent-d">
+          <h2>目前可用</h2>
+          <p id="availableValue">NT$0.00</p>
+          <small id="statusNote">可新增支出</small>
+        </article>
+      </section>
+
+      <section class="meter-row reveal" aria-label="進度條">
+        <div class="meter">
+          <div class="meter-head">
+            <h3>預算解鎖進度</h3>
+            <span id="unlockProgressText">0%</span>
+          </div>
+          <div class="meter-track">
+            <div id="unlockProgressFill" class="meter-fill"></div>
+          </div>
+        </div>
+
+        <div class="meter">
+          <div class="meter-head">
+            <h3>可用額度使用率</h3>
+            <span id="spendProgressText">0%</span>
+          </div>
+          <div class="meter-track">
+            <div id="spendProgressFill" class="meter-fill warning"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="workspace single-column reveal" aria-label="支出操作區">
+        <article class="panel">
+          <div class="panel-head">
+            <h2>支出紀錄</h2>
+            <span id="expenseCountBadge" class="badge">0 筆</span>
+          </div>
+
+          <div class="panel-tools" role="group" aria-label="支出排序">
+            <button type="button" class="segment is-active" data-expense-sort="latest" aria-pressed="true">最新優先</button>
+            <button type="button" class="segment" data-expense-sort="highest" aria-pressed="false">金額最高</button>
+            <div class="tool-select-wrap">
+              <label for="expenseCategoryFilter" class="sr-only">分類篩選</label>
+              <select id="expenseCategoryFilter" aria-label="分類篩選">
+                <option value="all">全部分類</option>
+                <option value="food">餐飲</option>
+                <option value="transport">交通</option>
+                <option value="housing">居家</option>
+                <option value="learning">學習</option>
+                <option value="health">健康</option>
+                <option value="entertainment">娛樂</option>
+                <option value="bills">帳單</option>
+                <option value="other">其他</option>
+              </select>
+            </div>
+          </div>
+
+          <form id="expenseForm" class="stack-form" autocomplete="off">
+            <label for="expenseTitleInput">支出名稱</label>
+            <input
+              id="expenseTitleInput"
+              name="expenseTitle"
+              type="text"
+              list="expenseNameOptions"
+              maxlength="80"
+              placeholder="例如：交通費"
+              required
+            />
+            <datalist id="expenseNameOptions"></datalist>
+
+            <label for="expenseCategoryInput">支出分類</label>
+            <select id="expenseCategoryInput" name="expenseCategory">
+              <option value="food">餐飲</option>
+              <option value="transport">交通</option>
+              <option value="housing">居家</option>
+              <option value="learning">學習</option>
+              <option value="health">健康</option>
+              <option value="entertainment">娛樂</option>
+              <option value="bills">帳單</option>
+              <option value="other" selected>其他</option>
+            </select>
+
+            <label for="expenseAmountInput">支出金額</label>
+            <div class="inline-input">
+              <input
+                id="expenseAmountInput"
+                name="expenseAmount"
+                type="number"
+                inputmode="decimal"
+                data-numpad="true"
+                min="0.01"
+                step="0.01"
+                placeholder="例如 320"
+                required
+              />
+              <button id="expenseSubmitButton" type="submit">新增支出</button>
+            </div>
+            <p id="expenseHint" class="hint">目前可新增上限：NT$0.00</p>
+          </form>
+
+          <ul id="expenseList" class="item-list" aria-live="polite"></ul>
+          <p id="expenseEmpty" class="empty">尚未記錄支出。</p>
+        </article>
+      </section>
+
+      <div id="messageBar" class="message" role="status" aria-live="polite"></div>
+
+      <dialog id="confirmModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-icon">⚠️</div>
+          <h3 id="confirmTitle">確認操作</h3>
+          <p id="confirmMessage">您確定要執行此操作嗎？</p>
+          <div class="modal-actions">
+            <button id="confirmCancel" type="button" class="ghost-button">取消</button>
+            <button id="confirmOk" type="button" class="danger">確定</button>
+          </div>
+        </div>
+      </dialog>
+    </main>
+  </body>
+</html>
