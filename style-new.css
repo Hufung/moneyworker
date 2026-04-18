@@ -858,7 +858,7 @@ button:disabled {
     top: 0;
     left: 0;
     right: 0;
-    z-index: 70;
+    z-index: 50;
     margin: 0;
     background: var(--bg-1);
     border-bottom: 1px solid var(--line);
@@ -866,13 +866,10 @@ button:disabled {
     padding: env(safe-area-inset-top, 0px) 4px 0;
     gap: 0;
     flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
   }
 
   .nav-link {
     flex: 1;
-    min-width: max-content;
     text-align: center;
     padding: 10px 4px;
     font-size: 0.8rem;
