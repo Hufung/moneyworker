@@ -831,14 +831,14 @@ button:disabled {
 @media (max-width: 720px) {
   .layout {
     width: 96vw;
-    padding-top: 20px;
-    /* 60px = approx bottom nav bar height; extra space keeps content clear of the bar */
-    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    /* keep content clear of fixed top nav on phones */
+    padding-top: calc(72px + env(safe-area-inset-top, 0px));
+    padding-bottom: 28px;
   }
 
   body.number-pad-open .layout {
-    /* 380px = 60px (nav bar) + ~320px (number pad sheet) */
-    padding-bottom: calc(380px + env(safe-area-inset-bottom, 0px));
+    /* keep focused fields visible above the number pad */
+    padding-bottom: calc(320px + env(safe-area-inset-bottom, 0px));
   }
 
   .hero {
@@ -855,30 +855,33 @@ button:disabled {
 
   .top-nav {
     position: fixed;
-    bottom: 0;
+    top: 0;
     left: 0;
     right: 0;
-    z-index: 50;
+    z-index: 70;
     margin: 0;
     background: var(--bg-1);
-    border-top: 1px solid var(--line);
-    border-bottom: none;
-    padding: 0 4px env(safe-area-inset-bottom, 0px);
+    border-bottom: 1px solid var(--line);
+    border-top: none;
+    padding: env(safe-area-inset-top, 0px) 4px 0;
     gap: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .nav-link {
     flex: 1;
+    min-width: max-content;
     text-align: center;
     padding: 10px 4px;
     font-size: 0.8rem;
-    border-bottom: none;
-    border-top: 2px solid transparent;
+    border-top: none;
+    border-bottom: 2px solid transparent;
   }
 
   .nav-link.is-active {
-    border-top-color: var(--accent);
-    border-bottom-color: transparent;
+    border-bottom-color: var(--accent);
   }
 
   .meter-row {
@@ -942,13 +945,11 @@ button:disabled {
   }
 
   .message {
-    /* stay above the fixed bottom nav bar */
-    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   }
 
   body.number-pad-open .message {
-    /* stay above bottom nav bar (~60px) and open number pad (~300px) */
-    bottom: calc(360px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(312px + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -1059,13 +1060,16 @@ button:disabled {
 }
 
 @media (max-width: 720px) {
-  /* push number pad above the fixed bottom nav bar */
   .number-pad {
-    bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+    bottom: 0;
   }
 }
 
 @media (max-width: 480px) {
+  .summary {
+    grid-template-columns: 1fr;
+  }
+
   .hero-copy {
     display: none;
   }
