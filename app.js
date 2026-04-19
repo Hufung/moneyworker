@@ -1184,17 +1184,11 @@ function normalizeExpense(raw) {
 }
 
 function parseInputToCents(value, allowZero) {
-  const normalized = String(value ?? "").trim().replace(/,/g, "");
-  if (!normalized) {
+  const cents = parseMajorUnitInputToCents(value);
+  if (cents === null) {
     return null;
   }
 
-  const numeric = Number(normalized);
-  if (!Number.isFinite(numeric)) {
-    return null;
-  }
-
-  const cents = Math.round(numeric * 100);
   if (cents < 0) {
     return null;
   }
@@ -1212,11 +1206,28 @@ function parseInputToCents(value, allowZero) {
 
 function sanitizeStoredCents(value) {
   const cents = parseStoredValueToCents(value);
+  if (cents === null) {
+    return null;
+  }
   if (cents < 0 || cents > MAX_CENTS) {
     return null;
   }
 
   return cents;
+}
+
+function parseMajorUnitInputToCents(value) {
+  const normalized = normalizeAmountInput(value);
+  if (!normalized || normalized === "-" || normalized === "." || normalized === "-.") {
+    return null;
+  }
+
+  const numeric = Number(normalized);
+  if (!Number.isFinite(numeric)) {
+    return null;
+  }
+
+  return Math.round(numeric * 100);
 }
 
 function parseStoredValueToCents(value) {
@@ -1240,7 +1251,7 @@ function parseStoredValueToCents(value) {
     return Math.round(Number(trimmed));
   }
 
-  const normalized = trimmed.replace(/,/g, "").replace(/[^\d.-]/g, "");
+  const normalized = normalizeAmountInput(trimmed);
   if (!normalized || normalized === "-" || normalized === "." || normalized === "-.") {
     return null;
   }
@@ -1251,6 +1262,13 @@ function parseStoredValueToCents(value) {
   }
 
   return Math.round(numeric * 100);
+}
+
+function normalizeAmountInput(value) {
+  return String(value ?? "")
+    .trim()
+    .replace(/,/g, "")
+    .replace(/[^\d.-]/g, "");
 }
 
 function normalizeText(value) {
