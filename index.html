@@ -20,6 +20,7 @@
         <a class="nav-link" href="analysis.html">分析頁</a>
         <a class="nav-link" href="expenses.html">支出頁</a>
         <a class="nav-link" href="settings.html">設定頁</a>
+        <button type="button" class="nav-install" id="installAppButton">加入主畫面</button>
       </nav>
 
       <header class="hero reveal">
@@ -39,7 +40,7 @@
         <article class="stat-card accent-b">
           <h2>可用資金</h2>
           <p id="unlockedEverValue">NT$0.00</p>
-          <small>完成過就保留</small>
+          <small>已扣除支出（同目前可用）</small>
         </article>
 
         <article class="stat-card accent-b">
@@ -71,7 +72,7 @@
               <input
                 id="budgetInput"
                 name="budget"
-                type="number"
+                type="text"
                 inputmode="decimal"
                 data-numpad="true"
                 min="0"
@@ -93,7 +94,7 @@
               <input
                 id="incomeInput"
                 name="income"
-                type="number"
+                type="text"
                 inputmode="decimal"
                 data-numpad="true"
                 min="0.01"
@@ -137,7 +138,7 @@
               <input
                 id="todoUnlockInput"
                 name="todoUnlock"
-                type="number"
+                type="text"
                 inputmode="decimal"
                 data-numpad="true"
                 min="0.01"

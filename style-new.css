@@ -112,6 +112,23 @@ body {
   border-bottom-color: var(--accent);
 }
 
+.nav-install {
+  margin-left: auto;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  min-height: auto;
+}
+
+.nav-install:hover {
+  background: var(--bg-2);
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
 /* Command bar */
 .command-bar {
   margin-top: 32px;
@@ -826,6 +843,10 @@ button:disabled {
   .top-nav {
     gap: 16px;
   }
+
+  .nav-install {
+    margin-left: 0;
+  }
 }
 
 @media (max-width: 720px) {
@@ -879,6 +900,16 @@ button:disabled {
 
   .nav-link.is-active {
     border-bottom-color: var(--accent);
+  }
+
+  .nav-install {
+    flex: 1;
+    text-align: center;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 4px;
+    font-size: 0.75rem;
+    min-height: 44px;
   }
 
   .meter-row {
