@@ -4,6 +4,8 @@ const MAX_CENTS = 50000000000;
 const DEFAULT_EXPENSE_CATEGORY = "other";
 const MOBILE_VIEWPORT_WIDTH = 900;
 const DEFAULT_CURRENCY_CODE = "TWD";
+const VALID_NORMALIZED_AMOUNT_PATTERN = /^(?:\d+\.?\d*|\.\d+)$/;
+const CURRENCY_MARKER_PATTERN = /[A-Za-z$¥￥£€₹₽₱₩₫₪₴₦₭₡₲₵₸₺₼₾\s]/g;
 
 const SUPPORTED_CURRENCIES = {
   TWD: { label: "新台幣 (TWD)", locale: "zh-TW" },
@@ -1189,10 +1191,6 @@ function parseInputToCents(value, allowZero) {
     return null;
   }
 
-  if (cents < 0) {
-    return null;
-  }
-
   if (!allowZero && cents === 0) {
     return null;
   }
@@ -1218,7 +1216,7 @@ function sanitizeStoredCents(value) {
 
 function parseMajorUnitInputToCents(value) {
   const normalized = normalizeAmountInput(value);
-  if (!normalized || normalized === "-" || normalized === "." || normalized === "-.") {
+  if (!normalized) {
     return null;
   }
 
@@ -1247,12 +1245,8 @@ function parseStoredValueToCents(value) {
     return null;
   }
 
-  if (/^-?\d+$/.test(trimmed)) {
-    return Math.round(Number(trimmed));
-  }
-
   const normalized = normalizeAmountInput(trimmed);
-  if (!normalized || normalized === "-" || normalized === "." || normalized === "-.") {
+  if (!normalized) {
     return null;
   }
 
@@ -1265,10 +1259,14 @@ function parseStoredValueToCents(value) {
 }
 
 function normalizeAmountInput(value) {
-  return String(value ?? "")
+  const normalized = String(value ?? "")
     .trim()
     .replace(/,/g, "")
-    .replace(/[^\d.-]/g, "");
+    .replace(CURRENCY_MARKER_PATTERN, "");
+  if (!normalized || !VALID_NORMALIZED_AMOUNT_PATTERN.test(normalized)) {
+    return "";
+  }
+  return normalized;
 }
 
 function normalizeText(value) {
