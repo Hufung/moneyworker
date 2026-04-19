@@ -50,6 +50,7 @@ let toastTimer = null;
 let pendingConfirmCallback = null;
 let undoBuffer = null;
 let activeNumpadInput = null;
+let deferredInstallPrompt = null;
 
 const uiState = {
   todoFilter: "all",
@@ -145,6 +146,7 @@ function cacheElements() {
   els.confirmMessage = document.getElementById("confirmMessage");
   els.confirmCancel = document.getElementById("confirmCancel");
   els.confirmOk = document.getElementById("confirmOk");
+  els.installAppButton = document.getElementById("installAppButton");
 
   els.numericInputs = Array.from(document.querySelectorAll("input[data-numpad='true']"));
   els.numberPadRoot = null;
@@ -199,6 +201,7 @@ function bindEvents() {
   }
 
   initializeNumberPad();
+  initializeInstallPrompt();
   window.addEventListener("resize", syncNumpadInputMode);
 }
 
@@ -378,17 +381,6 @@ function handleExpenseSubmit(event) {
     return;
   }
 
-  const derived = computeDerived(state);
-  if (amountCents > derived.availableFundsCents) {
-    showMessage(
-      `可用資金不足，最多可再新增 ${formatCurrency(
-        Math.max(derived.availableFundsCents, 0)
-      )}。`,
-      "error"
-    );
-    return;
-  }
-
   const expense = {
     id: makeId("exp"),
     title,
@@ -403,7 +395,11 @@ function handleExpenseSubmit(event) {
 
   els.expenseForm.reset();
   els.expenseTitleInput.focus();
-  showMessage("支出已新增。", "success");
+  const remainingAfterSubmit = computeDerived(state).availableFundsCents;
+  showMessage(
+    remainingAfterSubmit < 0 ? "支出已新增（目前為透支狀態）。" : "支出已新增。",
+    remainingAfterSubmit < 0 ? "warn" : "success"
+  );
 }
 
 function handleTodoAction(event) {
@@ -633,12 +629,13 @@ function renderSummary(derived) {
   }
 
   els.budgetValue.textContent = formatCurrency(derived.currentBudgetCents);
-  els.unlockedEverValue.textContent = formatCurrency(state.unlockedEverCents);
+  els.unlockedEverValue.textContent = formatCurrency(derived.availableFundsCents);
   els.incomeValue.textContent = formatCurrency(state.incomeTotalCents);
   els.spentValue.textContent = formatCurrency(derived.spentTotalCents);
   els.availableValue.textContent = formatCurrency(derived.availableFundsCents);
 
   const overspent = derived.availableFundsCents < 0;
+  els.unlockedEverValue.classList.toggle("is-negative", overspent);
   els.availableValue.classList.toggle("is-negative", overspent);
   if (els.statusNote) {
     els.statusNote.textContent = overspent
@@ -790,13 +787,13 @@ function renderExpenseAvailability(derived) {
     return;
   }
 
-  const available = Math.max(derived.availableFundsCents, 0);
+  const available = derived.availableFundsCents;
   els.expenseHint.textContent =
     available > 0
-      ? `目前可新增上限：${formatCurrency(available)}`
-      : "目前沒有可用資金，先完成待辦來解鎖。";
+      ? `目前可新增建議上限：${formatCurrency(available)}`
+      : `目前可用為 ${formatCurrency(available)}，可透支新增支出。`;
   els.expenseHint.classList.toggle("is-blocked", available <= 0);
-  els.expenseSubmitButton.disabled = available <= 0;
+  els.expenseSubmitButton.disabled = false;
 }
 
 function renderInsights(derived) {
@@ -1499,6 +1496,63 @@ function getInputFriendlyName(input) {
 
 function isMobileViewport() {
   return window.matchMedia(`(max-width: ${MOBILE_VIEWPORT_WIDTH}px)`).matches;
+}
+
+function initializeInstallPrompt() {
+  if (!els.installAppButton) {
+    return;
+  }
+
+  bindIfPresent(els.installAppButton, "click", () => {
+    void handleInstallPrompt();
+  });
+
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    showMessage("已成功加入主畫面。", "success");
+  });
+}
+
+async function handleInstallPrompt() {
+  if (isStandaloneMode()) {
+    showMessage("此網站已在主畫面。", "success");
+    return;
+  }
+
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const choiceResult = await deferredInstallPrompt.userChoice;
+    if (choiceResult && choiceResult.outcome === "accepted") {
+      showMessage("安裝請求已送出。", "success");
+    } else {
+      showMessage("您已取消安裝，可稍後再試。", "warn");
+    }
+    deferredInstallPrompt = null;
+    return;
+  }
+
+  if (isIOSDevice()) {
+    showMessage("iOS：點「分享」→「加入主畫面」。", "warn");
+    return;
+  }
+
+  showMessage("Android：開啟瀏覽器選單，選「加到主畫面」。", "warn");
+}
+
+function isIOSDevice() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent || "");
+}
+
+function isStandaloneMode() {
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    Boolean(window.navigator.standalone)
+  );
 }
 
 function bindIfPresent(element, eventName, handler) {
