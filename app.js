@@ -788,10 +788,15 @@ function renderExpenseAvailability(derived) {
   }
 
   const available = derived.availableFundsCents;
-  els.expenseHint.textContent =
-    available > 0
-      ? `建議可新增上限：${formatCurrency(available)}`
-      : `目前可用為 ${formatCurrency(available)}，可透支新增支出。`;
+  if (available > 0) {
+    els.expenseHint.textContent = `建議可新增上限：${formatCurrency(available)}`;
+  } else if (available === 0) {
+    els.expenseHint.textContent = "目前可用為 0，可透支新增支出。";
+  } else {
+    els.expenseHint.textContent = `目前透支 ${formatCurrency(
+      Math.abs(available)
+    )}，可繼續新增支出。`;
+  }
   els.expenseHint.classList.toggle("is-blocked", available <= 0);
   els.expenseSubmitButton.disabled = false;
 }
