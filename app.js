@@ -1545,7 +1545,12 @@ async function handleInstallPrompt() {
 }
 
 function isIOSDevice() {
-  return /iphone|ipad|ipod/i.test(navigator.userAgent || "");
+  const userAgent = navigator.userAgent || "";
+  const platform = navigator.platform || "";
+  return (
+    /iphone|ipad|ipod/i.test(userAgent) ||
+    (platform === "MacIntel" && Number(navigator.maxTouchPoints) > 1)
+  );
 }
 
 function isStandaloneMode() {
