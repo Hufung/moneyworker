@@ -790,7 +790,7 @@ function renderExpenseAvailability(derived) {
   const available = derived.availableFundsCents;
   els.expenseHint.textContent =
     available > 0
-      ? `目前可新增建議上限：${formatCurrency(available)}`
+      ? `建議可新增上限：${formatCurrency(available)}`
       : `目前可用為 ${formatCurrency(available)}，可透支新增支出。`;
   els.expenseHint.classList.toggle("is-blocked", available <= 0);
   els.expenseSubmitButton.disabled = false;
