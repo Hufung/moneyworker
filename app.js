@@ -120,7 +120,7 @@ function cacheElements() {
   );
 
   els.budgetValue = document.getElementById("budgetValue");
-  els.unlockedEverValue = document.getElementById("unlockedEverValue");
+  els.availableFundsValue = document.getElementById("availableFundsValue");
   els.incomeValue = document.getElementById("incomeValue");
   els.spentValue = document.getElementById("spentValue");
   els.availableValue = document.getElementById("availableValue");
@@ -620,7 +620,7 @@ function renderAll() {
 function renderSummary(derived) {
   if (
     !els.budgetValue ||
-    !els.unlockedEverValue ||
+    !els.availableFundsValue ||
     !els.incomeValue ||
     !els.spentValue ||
     !els.availableValue
@@ -629,13 +629,13 @@ function renderSummary(derived) {
   }
 
   els.budgetValue.textContent = formatCurrency(derived.currentBudgetCents);
-  els.unlockedEverValue.textContent = formatCurrency(derived.availableFundsCents);
+  els.availableFundsValue.textContent = formatCurrency(derived.availableFundsCents);
   els.incomeValue.textContent = formatCurrency(state.incomeTotalCents);
   els.spentValue.textContent = formatCurrency(derived.spentTotalCents);
   els.availableValue.textContent = formatCurrency(derived.availableFundsCents);
 
   const overspent = derived.availableFundsCents < 0;
-  els.unlockedEverValue.classList.toggle("is-negative", overspent);
+  els.availableFundsValue.classList.toggle("is-negative", overspent);
   els.availableValue.classList.toggle("is-negative", overspent);
   if (els.statusNote) {
     els.statusNote.textContent = overspent
@@ -789,7 +789,7 @@ function renderExpenseAvailability(derived) {
 
   const available = derived.availableFundsCents;
   if (available > 0) {
-    els.expenseHint.textContent = `建議可新增上限：${formatCurrency(available)}`;
+    els.expenseHint.textContent = `建議新增上限：${formatCurrency(available)}`;
   } else if (available === 0) {
     els.expenseHint.textContent = "目前可用為 0，可透支新增支出。";
   } else {
