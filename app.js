@@ -136,6 +136,7 @@ function cacheElements() {
   els.messageBar = document.getElementById("messageBar");
   els.undoButton = document.getElementById("undoButton");
   els.resetButton = document.getElementById("resetButton");
+  els.saveButton = document.getElementById("saveButton");
   els.exportButton = document.getElementById("exportButton");
   els.importButton = document.getElementById("importButton");
   els.importInput = document.getElementById("importInput");
@@ -162,6 +163,7 @@ function bindEvents() {
   bindIfPresent(els.todoList, "click", handleTodoAction);
   bindIfPresent(els.expenseList, "click", handleExpenseAction);
   bindIfPresent(els.resetButton, "click", resetAllData);
+  bindIfPresent(els.saveButton, "click", handleManualSave);
   bindIfPresent(els.undoButton, "click", restoreLastDeletedItem);
   bindIfPresent(els.exportButton, "click", exportBackup);
   bindIfPresent(els.importButton, "click", triggerImportBackup);
@@ -512,6 +514,13 @@ function resetAllData() {
       showMessage("所有資料已清空。", "warn");
     }
   );
+}
+
+function handleManualSave() {
+  state.updatedAt = Date.now();
+  if (saveState()) {
+    showMessage("已儲存至本機。", "success");
+  }
 }
 
 function exportBackup() {
@@ -1202,17 +1211,46 @@ function parseInputToCents(value, allowZero) {
 }
 
 function sanitizeStoredCents(value) {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) {
-    return null;
-  }
-
-  const cents = Math.round(numeric);
+  const cents = parseStoredValueToCents(value);
   if (cents < 0 || cents > MAX_CENTS) {
     return null;
   }
 
   return cents;
+}
+
+function parseStoredValueToCents(value) {
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) {
+      return null;
+    }
+    return Math.round(value);
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (/^-?\d+$/.test(trimmed)) {
+    return Math.round(Number(trimmed));
+  }
+
+  const normalized = trimmed.replace(/,/g, "").replace(/[^\d.-]/g, "");
+  if (!normalized || normalized === "-" || normalized === "." || normalized === "-.") {
+    return null;
+  }
+
+  const numeric = Number(normalized);
+  if (!Number.isFinite(numeric)) {
+    return null;
+  }
+
+  return Math.round(numeric * 100);
 }
 
 function normalizeText(value) {
