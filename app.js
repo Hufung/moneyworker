@@ -253,7 +253,9 @@ function handleGlobalShortcuts(event) {
   if (key === "e") {
     event.preventDefault();
     scrollToSection("expensesSection");
-    focusInput("expenseTitleInput");
+    window.setTimeout(() => {
+      focusInput("expenseTitleInput");
+    }, 140);
     return;
   }
 
@@ -1066,7 +1068,11 @@ function getExpenseCategoryBreakdown(expenses) {
   })).sort((a, b) => b.amountCents - a.amountCents);
 
   const totalCents = breakdown.reduce((sum, item) => sum + item.amountCents, 0);
-  if (totalCents <= 0) {
+  if (totalCents === 0) {
+    return [];
+  }
+
+  if (totalCents < 0) {
     return [];
   }
 
