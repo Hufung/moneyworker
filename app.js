@@ -46,6 +46,17 @@ const EXPENSE_CATEGORY_LABELS = {
   other: "其他",
 };
 
+const CATEGORY_COLORS = {
+  food: "#8b7d72",
+  transport: "#5c7a8f",
+  housing: "#7a8a5c",
+  learning: "#7a6b8a",
+  health: "#5c8a7a",
+  entertainment: "#8a6b45",
+  bills: "#6b7a8a",
+  other: "#c4bdb2",
+};
+
 let state = createDefaultState();
 let startupNotice = "";
 let toastTimer = null;
@@ -58,6 +69,7 @@ const uiState = {
   todoFilter: "all",
   expenseSort: "latest",
   expenseCategoryFilter: "all",
+  currentPage: "dashboard",
 };
 
 const currencyFormatterCache = new Map();
@@ -154,6 +166,11 @@ function cacheElements() {
   els.numericInputs = Array.from(document.querySelectorAll("input[data-numpad='true']"));
   els.numberPadRoot = null;
   els.numberPadTarget = null;
+
+  els.navLinks = Array.from(document.querySelectorAll(".nav-link[data-page], .page-card[data-page]"));
+  els.pageContents = Array.from(document.querySelectorAll(".page-content"));
+  els.expensePieChart = document.getElementById("expensePieChart");
+  els.chartLegend = document.getElementById("chartLegend");
 }
 
 function bindEvents() {
@@ -193,6 +210,10 @@ function bindEvents() {
   document.addEventListener("keydown", handleGlobalShortcuts);
   window.addEventListener("storage", handleStorageSync);
 
+  els.navLinks.forEach((link) => {
+    link.addEventListener("click", handleNavLinkClick);
+  });
+
   if (els.confirmCancel) {
     els.confirmCancel.addEventListener("click", closeConfirmModal);
   }
@@ -218,6 +239,30 @@ function handleQuickFocus(event) {
   focusInput(button.dataset.focus);
 }
 
+function handleNavLinkClick(event) {
+  const link = event.currentTarget;
+  const pageId = link.dataset.page;
+  if (!pageId) {
+    return;
+  }
+
+  event.preventDefault();
+  switchPage(pageId);
+}
+
+function switchPage(pageId) {
+  els.pageContents.forEach((section) => {
+    section.hidden = section.id !== `page-${pageId}`;
+  });
+
+  document.querySelectorAll(".nav-link[data-page]").forEach((link) => {
+    const isActive = link.dataset.page === pageId;
+    link.classList.toggle("is-active", isActive);
+  });
+
+  uiState.currentPage = pageId;
+}
+
 function handleGlobalShortcuts(event) {
   if (!event.altKey || event.ctrlKey || event.metaKey) {
     return;
@@ -238,17 +283,14 @@ function handleGlobalShortcuts(event) {
 
   if (key === "e") {
     event.preventDefault();
-    if (document.getElementById("expenseTitleInput")) {
-      focusInput("expenseTitleInput");
-    } else {
-      window.location.href = "expenses.html";
-    }
+    switchPage("expenses");
+    focusInput("expenseTitleInput");
     return;
   }
 
   if (key === "a") {
     event.preventDefault();
-    window.location.href = "analysis.html";
+    switchPage("analysis");
     return;
   }
 
@@ -626,6 +668,7 @@ function renderAll() {
   renderInsights(derived);
   renderNameSuggestions();
   renderUndoState();
+  renderPieChart();
 }
 
 function renderSummary(derived) {
@@ -916,6 +959,114 @@ function renderUndoState() {
   const targetLabel = undoBuffer.type === "todo" ? "待辦" : "支出";
   els.undoButton.disabled = false;
   els.undoButton.textContent = `復原${targetLabel}`;
+}
+
+function renderPieChart() {
+  const canvas = els.expensePieChart;
+  if (!canvas) {
+    return;
+  }
+
+  const dpr = window.devicePixelRatio || 1;
+  const size = 280;
+
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  canvas.style.width = `${size}px`;
+  canvas.style.height = `${size}px`;
+
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, size, size);
+
+  const categoryTotals = {};
+  state.expenses.forEach((expense) => {
+    const cat = normalizeExpenseCategory(expense.category);
+    categoryTotals[cat] = (categoryTotals[cat] || 0) + expense.amountCents;
+  });
+
+  const entries = Object.entries(categoryTotals)
+    .filter(([, v]) => v > 0)
+    .sort((a, b) => b[1] - a[1]);
+
+  if (entries.length === 0) {
+    ctx.fillStyle = "#a19d96";
+    ctx.font = `14px Manrope, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("尚無支出資料", size / 2, size / 2);
+    renderChartLegend([], 0);
+    return;
+  }
+
+  const total = entries.reduce((sum, [, v]) => sum + v, 0);
+  const cx = size / 2;
+  const cy = size / 2;
+  const outerRadius = (size / 2) * 0.82;
+  const innerRadius = outerRadius * 0.48;
+
+  let startAngle = -Math.PI / 2;
+  entries.forEach(([cat, val]) => {
+    const sliceAngle = (val / total) * 2 * Math.PI;
+    const color = CATEGORY_COLORS[cat] || "#c4bdb2";
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, outerRadius, startAngle, startAngle + sliceAngle);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = "#fafaf8";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    startAngle += sliceAngle;
+  });
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, innerRadius, 0, 2 * Math.PI);
+  ctx.fillStyle = "#fafaf8";
+  ctx.fill();
+
+  const totalFormatted = formatCurrency(total);
+  ctx.fillStyle = "#2a2825";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `500 13px Manrope, sans-serif`;
+  ctx.fillText("合計", cx, cy - 10);
+  ctx.font = `400 12px Manrope, sans-serif`;
+  ctx.fillStyle = "#6b6661";
+  ctx.fillText(totalFormatted, cx, cy + 8);
+
+  renderChartLegend(entries, total);
+}
+
+function renderChartLegend(entries, total) {
+  const legend = els.chartLegend;
+  if (!legend) {
+    return;
+  }
+
+  if (entries.length === 0) {
+    legend.innerHTML = "";
+    return;
+  }
+
+  legend.innerHTML = entries
+    .map(([cat, val]) => {
+      const pct = Math.round((val / total) * 100);
+      const color = CATEGORY_COLORS[cat] || "#c4bdb2";
+      const label = EXPENSE_CATEGORY_LABELS[cat] || cat;
+      return `
+        <li class="chart-legend-item">
+          <span class="chart-legend-dot" style="background:${escapeHtml(color)}"></span>
+          <span class="chart-legend-label">${escapeHtml(label)}</span>
+          <span class="chart-legend-pct">${pct}%</span>
+          <span class="chart-legend-val">${formatCurrency(val)}</span>
+        </li>
+      `;
+    })
+    .join("");
 }
 
 function setUndoBuffer(type, item, index) {
