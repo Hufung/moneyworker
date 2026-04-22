@@ -46,6 +46,17 @@ const EXPENSE_CATEGORY_LABELS = {
   other: "其他",
 };
 
+const EXPENSE_CATEGORY_COLORS = {
+  food: "#d96b6b",
+  transport: "#6f86d6",
+  housing: "#7c9a5d",
+  learning: "#8f7ad6",
+  health: "#4c9f9f",
+  entertainment: "#c98a3d",
+  bills: "#8c8c8c",
+  other: "#b59f8f",
+};
+
 let state = createDefaultState();
 let startupNotice = "";
 let toastTimer = null;
@@ -129,6 +140,9 @@ function cacheElements() {
   els.statusNote = document.getElementById("statusNote");
   els.coachMessage = document.getElementById("coachMessage");
   els.nextUnlockValue = document.getElementById("nextUnlockValue");
+  els.expensePieChart = document.getElementById("expensePieChart");
+  els.expensePieLegend = document.getElementById("expensePieLegend");
+  els.expensePieEmpty = document.getElementById("expensePieEmpty");
 
   els.unlockProgressText = document.getElementById("unlockProgressText");
   els.spendProgressText = document.getElementById("spendProgressText");
@@ -238,17 +252,14 @@ function handleGlobalShortcuts(event) {
 
   if (key === "e") {
     event.preventDefault();
-    if (document.getElementById("expenseTitleInput")) {
-      focusInput("expenseTitleInput");
-    } else {
-      window.location.href = "expenses.html";
-    }
+    scrollToSection("expensesSection");
+    focusInput("expenseTitleInput");
     return;
   }
 
   if (key === "a") {
     event.preventDefault();
-    window.location.href = "analysis.html";
+    scrollToSection("analysisSection");
     return;
   }
 
@@ -624,6 +635,7 @@ function renderAll() {
   renderCurrencySelector();
   renderExpenseAvailability(derived);
   renderInsights(derived);
+  renderExpensePie();
   renderNameSuggestions();
   renderUndoState();
 }
@@ -854,6 +866,54 @@ function renderInsights(derived) {
   els.coachMessage.textContent = "已用完可用資金，可提高預算或刪除部分支出。";
 }
 
+function renderExpensePie() {
+  if (!els.expensePieChart || !els.expensePieLegend || !els.expensePieEmpty) {
+    return;
+  }
+
+  const breakdown = getExpenseCategoryBreakdown(state.expenses);
+  if (breakdown.length === 0) {
+    els.expensePieChart.style.background = "conic-gradient(var(--line) 0deg 360deg)";
+    els.expensePieChart.setAttribute("aria-label", "目前尚無支出資料");
+    els.expensePieLegend.innerHTML = "";
+    els.expensePieEmpty.hidden = false;
+    return;
+  }
+
+  let currentDegree = 0;
+  const gradientStops = breakdown
+    .map((item) => {
+      const start = currentDegree;
+      const end = currentDegree + item.ratio * 360;
+      currentDegree = end;
+      return `${item.color} ${start}deg ${end}deg`;
+    })
+    .join(", ");
+
+  els.expensePieChart.style.background = `conic-gradient(${gradientStops})`;
+  els.expensePieChart.setAttribute(
+    "aria-label",
+    breakdown
+      .map((item) => `${item.label}${Math.round(item.ratio * 100)}%`)
+      .join("，")
+  );
+
+  els.expensePieLegend.innerHTML = breakdown
+    .map(
+      (item) => `
+        <li>
+          <span class="pie-dot" style="background:${item.color}"></span>
+          <span class="pie-label">${escapeHtml(item.label)}</span>
+          <span class="pie-value">${Math.round(item.ratio * 100)}% · ${formatCurrency(
+            item.amountCents
+          )}</span>
+        </li>
+      `
+    )
+    .join("");
+  els.expensePieEmpty.hidden = true;
+}
+
 function renderNameSuggestions() {
   populateDatalist(
     els.todoNameOptions,
@@ -988,6 +1048,32 @@ function getVisibleExpenses(expenses, sort, categoryFilter) {
 
   filtered.sort((a, b) => b.createdAt - a.createdAt);
   return filtered;
+}
+
+function getExpenseCategoryBreakdown(expenses) {
+  const amountByCategory = expenses.reduce((map, expense) => {
+    const category = normalizeExpenseCategory(expense.category);
+    const nextAmount = (map.get(category) || 0) + expense.amountCents;
+    map.set(category, nextAmount);
+    return map;
+  }, new Map());
+
+  const breakdown = Array.from(amountByCategory, ([category, amountCents]) => ({
+    category,
+    label: getExpenseCategoryLabel(category),
+    amountCents,
+    color: EXPENSE_CATEGORY_COLORS[category] || EXPENSE_CATEGORY_COLORS.other,
+  })).sort((a, b) => b.amountCents - a.amountCents);
+
+  const totalCents = breakdown.reduce((sum, item) => sum + item.amountCents, 0);
+  if (totalCents <= 0) {
+    return [];
+  }
+
+  return breakdown.map((item) => ({
+    ...item,
+    ratio: item.amountCents / totalCents,
+  }));
 }
 
 function getNextUnlockTodo(todos) {
@@ -1635,6 +1721,15 @@ function focusInput(inputId) {
   if (typeof target.select === "function" && target.type !== "number") {
     target.select();
   }
+}
+
+function scrollToSection(sectionId) {
+  const target = document.getElementById(sectionId);
+  if (!target) {
+    return;
+  }
+
+  target.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function showConfirm(options, onConfirm) {
