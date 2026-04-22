@@ -894,7 +894,7 @@ function renderExpensePie() {
   els.expensePieChart.setAttribute(
     "aria-label",
     breakdown
-      .map((item) => `${item.label}${Math.round(item.ratio * 100)}%`)
+      .map((item) => `${item.label} ${Math.round(item.ratio * 100)}%`)
       .join("，")
   );
 
