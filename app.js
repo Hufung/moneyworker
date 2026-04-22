@@ -1072,10 +1072,6 @@ function getExpenseCategoryBreakdown(expenses) {
     return [];
   }
 
-  if (totalCents < 0) {
-    return [];
-  }
-
   return breakdown.map((item) => ({
     ...item,
     ratio: item.amountCents / totalCents,
